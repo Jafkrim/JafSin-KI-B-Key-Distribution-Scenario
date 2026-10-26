@@ -4,7 +4,7 @@
 # KONSTANTA
 # =========
 
-# Dari Galois Field GF (2^8) untuk AES, Substitution Box
+# Dari Galois Field GF (2^8) untuk AES, Substitution Box.
 # Didapat dari invers perkalian tiap byte di GF(2^8) terhadap polinomial 0x11B (khusus 0x00 tetap 0x00),
 # diubah lewat transformasi afin (perkalian matriks biner 8x8 + XOR bit konstan 0x63).
 S_BOX = [
@@ -26,7 +26,7 @@ S_BOX = [
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 ]
 
-# Dari Galois Field GF (2^8) untuk AES, invers dari Substitution Box
+# Dari Galois Field GF (2^8) untuk AES, invers dari Substitution Box.
 # Didapat dari invers transformasi afin (XOR bit konstan 0x63 + perkalian invers matriks biner 8x8),
 # dicari invers perkaliannya di GF(2^8).
 INV_S_BOX = [
@@ -48,7 +48,7 @@ INV_S_BOX = [
     0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
 ]
 
-# Dari Galois Field GF (2^8) untuk AES, Round Constants
+# Dari Galois Field GF (2^8) untuk AES, Round Constants.
 # Didapat dari perkalian 2 berurutan x^(i-1) di GF(2^8) per ronde,
 # di-XOR 0x11B saat melampaui 8-bit.
 RCON = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
@@ -98,9 +98,63 @@ def key_expansion(key: bytes) -> list[list[list[int]]]:
 # ==========================
 
 def bytes_to_state(data: bytes) -> list[list[int]]:
+    # Memecah 16 bytes data menjadi matriks 4 * 4.
+    state = [[0] * 4 for _ in range(4)]
+
+    for r in range(4):
+        for c in range(4):
+            state[r][c] = data[r + 4 * c]
+
+    return state
 
 def state_to_bytes(state: list[list[int]]) -> bytes:
+    # Mengembalikan matriks 4 * 4 menjadi 16 bytes data.
+    data = bytearray(16)
+
+    for r in range(4):
+        for c in range(4):
+            data[r + 4 * c] = state[r][c]
+
+    return bytes(data)
 
 def encrypt_block(plaintext_block: bytes, round_keys: list[list[list[int]]]) -> bytes:
+    # Mengonversi blok plaintext 16-byte menjadi matriks 4 * 4.
+    state = bytes_to_state(plaintext_block)
+
+    # Initial round: Mencampur state dengan kunci ronde pertama (indeks 0).
+    state = add_round_key(state, round_keys[0])
+
+    # Main rounds: indeks 1 hingga 9.
+    for i in range(1, 10):
+        state = sub_bytes(state)                    # Menyubstitusi byte menggunakan S-Box.
+        state = shift_rows(state)                   # Menggeser baris secara siklik.
+        state = mix_columns(state)                  # Mencampur kolom di Galois Field GF(2^8).
+        state = add_round_key(state, round_keys[i]) # XOR dengan sub-key ronde ke-i.
+
+    # Final round: Ronde ke-10, tanpa mix_columns.
+    state = sub_bytes(state)
+    state = shift_rows(state)
+    state = add_round_key(state, round_keys[10])
+
+    return state_to_bytes(state)
 
 def decrypt_block(ciphertext_block: bytes, round_keys: list[list[list[int]]]) -> bytes:
+    # Mengonversi blok ciphertext 16-byte menjadi matriks 4 * 4.
+    state = bytes_to_state(ciphertext_block)
+
+    # Initial round: Mencampur state dengan kunci ronde terakhir (indeks 10).
+    state = add_round_key(state, round_keys[10])
+
+    # Main rounds: indeks 9 hingga 1, dalam urutan terbalik.
+    for i in range(9, 0, -1):
+        state = inv_shift_rows(state)               # Kebalikan shift_rows.
+        state = inv_sub_bytes(state)                # Kebalikan sub_bytes.
+        state = add_round_key(state, round_keys[i]) # XOR dengan sub-key ronde ke-i.
+        state = inv_mix_columns(state)              # Kebalikan mix_columns.
+
+    # Final round: Tanpa mix_columns, ditutup dengan ronde pertama (indeks 0).
+    state = inv_shift_rows(state)
+    state = inv_sub_bytes(state)
+    state = add_round_key(state, round_keys[0])
+
+    return state_to_bytes(state)
