@@ -52,3 +52,55 @@ INV_S_BOX = [
 # Didapat dari perkalian 2 berurutan x^(i-1) di GF(2^8) per ronde,
 # di-XOR 0x11B saat melampaui 8-bit.
 RCON = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
+
+# ====================
+# OPERASI GALOIS FIELD
+# ====================
+
+def xtime(a: int) -> int:
+
+def gmul(a: int, b: int) -> int:
+
+# ========
+# ENKRIPSI
+# ========
+
+def sub_bytes(state: list[list[int]]) -> list[list[int]]:
+
+def shift_rows(state: list[list[int]]) -> list[list[int]]:
+
+def mix_columns(state: list[list[int]]) -> list[list[int]]:
+
+def add_round_key(state: list[list[int]], round_key: list[list[int]]) -> list[list[int]]:
+
+# ========
+# DEKRIPSI
+# ========
+
+def inv_sub_bytes(state: list[list[int]]) -> list[list[int]]:
+
+def inv_shift_rows(state: list[list[int]]) -> list[list[int]]:
+
+def inv_mix_columns(state: list[list[int]]) -> list[list[int]]:
+
+# ==================
+# PEMBANGKITAN KUNCI
+# ==================
+
+def rot_word(word: list[int]) -> list[int]:
+
+def sub_word(word: list[int]) -> list[int]:
+
+def key_expansion(key: bytes) -> list[list[list[int]]]:
+
+# ==========================
+# BLOK ENKRIPSI DAN DEKRIPSI
+# ==========================
+
+def bytes_to_state(data: bytes) -> list[list[int]]:
+
+def state_to_bytes(state: list[list[int]]) -> bytes:
+
+def encrypt_block(plaintext_block: bytes, round_keys: list[list[list[int]]]) -> bytes:
+
+def decrypt_block(ciphertext_block: bytes, round_keys: list[list[list[int]]]) -> bytes:
