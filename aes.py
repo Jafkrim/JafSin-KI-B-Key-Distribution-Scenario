@@ -58,30 +58,78 @@ RCON = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
 # ====================
 
 def xtime(a: int) -> int:
+    # Perkalian dengan x (atau 2) di GF(2^8) modulo polinomial 0x11B.
+    return ((a << 1) ^ 0x1B) & 0xFF if (a & 0x80) else (a << 1) & 0xFF
 
 def gmul(a: int, b: int) -> int:
+    # Perkalian di Galois Field GF(2^8) menggunakan metode Russian Peasant Multiplication.
+    p = 0
+    for _ in range(8):
+        if b & 1:
+            p ^= a
+        a = xtime(a)
+        b >>= 1
+    return p
 
 # ========
 # ENKRIPSI
 # ========
 
 def sub_bytes(state: list[list[int]]) -> list[list[int]]:
+    # Menyubstitusi setiap byte pada state menggunakan S_BOX.
+    return [[S_BOX[val] for val in row] for row in state]
 
 def shift_rows(state: list[list[int]]) -> list[list[int]]:
+    # Menggeser baris state ke kiri secara siklik (baris ke-r digeser sejauh r byte).
+    return [
+        state[0],
+        state[1][1:] + state[1][:1],
+        state[2][2:] + state[2][:2],
+        state[3][3:] + state[3][:3]
+    ]
 
 def mix_columns(state: list[list[int]]) -> list[list[int]]:
+    # Mencampur setiap kolom pada state dengan perkalian matriks di GF(2^8).
+    res = [[0] * 4 for _ in range(4)]
+    for c in range(4):
+        s0, s1, s2, s3 = state[0][c], state[1][c], state[2][c], state[3][c]
+        res[0][c] = gmul(s0, 2) ^ gmul(s1, 3) ^ s2 ^ s3
+        res[1][c] = s0 ^ gmul(s1, 2) ^ gmul(s2, 3) ^ s3
+        res[2][c] = s0 ^ s1 ^ gmul(s2, 2) ^ gmul(s3, 3)
+        res[3][c] = gmul(s0, 3) ^ s1 ^ s2 ^ gmul(s3, 2)
+    return res
 
 def add_round_key(state: list[list[int]], round_key: list[list[int]]) -> list[list[int]]:
+    # Melakukan operasi bitwise XOR antara state dan round_key.
+    return [[state[r][c] ^ round_key[r][c] for c in range(4)] for r in range(4)]
 
 # ========
 # DEKRIPSI
 # ========
 
 def inv_sub_bytes(state: list[list[int]]) -> list[list[int]]:
+    # Menyubstitusi setiap byte pada state menggunakan INV_S_BOX.
+    return [[INV_S_BOX[val] for val in row] for row in state]
 
 def inv_shift_rows(state: list[list[int]]) -> list[list[int]]:
+    # Menggeser baris state ke kanan secara siklik (kebalikan dari shift_rows).
+    return [
+        state[0],
+        state[1][3:] + state[1][:3],
+        state[2][2:] + state[2][:2],
+        state[3][1:] + state[3][:1]
+    ]
 
 def inv_mix_columns(state: list[list[int]]) -> list[list[int]]:
+    # Kebalikan dari mix_columns menggunakan perkalian matriks invers di GF(2^8).
+    res = [[0] * 4 for _ in range(4)]
+    for c in range(4):
+        s0, s1, s2, s3 = state[0][c], state[1][c], state[2][c], state[3][c]
+        res[0][c] = gmul(s0, 0x0E) ^ gmul(s1, 0x0B) ^ gmul(s2, 0x0D) ^ gmul(s3, 0x09)
+        res[1][c] = gmul(s0, 0x09) ^ gmul(s1, 0x0E) ^ gmul(s2, 0x0B) ^ gmul(s3, 0x0D)
+        res[2][c] = gmul(s0, 0x0D) ^ gmul(s1, 0x09) ^ gmul(s2, 0x0E) ^ gmul(s3, 0x0B)
+        res[3][c] = gmul(s0, 0x0B) ^ gmul(s1, 0x0D) ^ gmul(s2, 0x09) ^ gmul(s3, 0x0E)
+    return res
 
 # ==================
 # PEMBANGKITAN KUNCI
