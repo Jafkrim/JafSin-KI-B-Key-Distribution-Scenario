@@ -58,17 +58,41 @@ RCON = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
 # ====================
 
 def xtime(a: int) -> int:
-    # Perkalian dengan x (atau 2) di GF(2^8) modulo polinomial 0x11B.
-    return ((a << 1) ^ 0x1B) & 0xFF if (a & 0x80) else (a << 1) & 0xFF
+    # Menggeser bit ke kiri (dikalikan 2) sembari dibatasi sebesar 8-bit.
+    result = (a << 1) & 0xFF
+
+    # Jika terjadi overflow (bit ke-8 bernilai 1):
+    if a & 0x80:
+        # XOR dengan 0x1B, polinomial x^8 + x^4 + x^3 + x + 1.
+        result ^= 0x1B
+
+    return result
 
 def gmul(a: int, b: int) -> int:
-    # Perkalian di Galois Field GF(2^8) menggunakan metode Russian Peasant Multiplication.
     p = 0
+
+    # Mengulang sebanyak 8 kali untuk data 8-bit.
     for _ in range(8):
+        # Jika bit paling kanan dari b bernilai 1:
         if b & 1:
+            # Menambahkan a ke hasil (XOR).
             p ^= a
-        a = xtime(a)
+
+        # Jika bit paling kiri dari a bernilai 1,
+        # simpan informasi overflow.
+        hi_bit_set = a & 0x80
+
+        # Menggeser a ke kiri (dikalikan 2) dan membatasi sebesar 8-bit.
+        a = (a << 1) & 0xFF
+
+        # Jika a mengalami overflow:
+        if hi_bit_set:
+            # Melakukan XOR dengan 0x1B, polinomial x^8 + x^4 + x^3 + x + 1.
+            a ^= 0x1B
+
+        # Menggeser b ke kanan (dibagi 2) untuk memproses bit berikutnya.
         b >>= 1
+
     return p
 
 # ========
@@ -136,10 +160,54 @@ def inv_mix_columns(state: list[list[int]]) -> list[list[int]]:
 # ==================
 
 def rot_word(word: list[int]) -> list[int]:
+    # Memutar posisi 4 byte dalam satu word ke kiri secara siklik.
+    return word[1:] + word[:1]
 
 def sub_word(word: list[int]) -> list[int]:
+    # Menyubstitusi setiap byte dalam satu word menggunakan S-Box.
+    return [S_BOX[b] for b in word]
 
 def key_expansion(key: bytes) -> list[list[list[int]]]:
+    # Mengubah input kunci bytes menjadi list angka integer.
+    key_symbols = list(key)
+    words = []
+
+    # Mengambil 4 word pertama (16 byte) langsung dari master key.
+    for i in range(4):
+        words.append(key_symbols[i * 4 : (i + 1) * 4])
+
+    # Membangkitkan 40 word berikutnya untuk 11 ronde (total 44 word).
+    for i in range(4, 44):
+        temp = list(words[i - 1])
+
+        # Jika i adalah kelipatan 4 word:
+        if i % 4 == 0:
+            # Melakukan operasi rot_word dan sub_word.
+            temp = sub_word(rot_word(temp))
+
+            # Melakukan XOR dengan RCON.
+            for j in range(4):
+                temp[j] ^= RCON[i // 4][j]
+
+        # Melakukan XOR antara word 4 posisi sebelumnya dengan 'temp'.
+        new_word = [words[i - 4][j] ^ temp[j] for j in range(4)]
+        words.append(new_word)
+
+   #  Mengelompokkan 44 word menjadi 11 matriks 4 * 4.
+    round_keys = []
+
+    for r in range(11):
+        r_key = [[0] * 4 for _ in range(4)]
+
+        for c in range(4):
+            word_col = words[r * 4 + c]
+
+            for row in range(4):
+                r_key[row][c] = word_col[row]
+                
+        round_keys.append(r_key)
+        
+    return round_keys
 
 # ==========================
 # BLOK ENKRIPSI DAN DEKRIPSI
