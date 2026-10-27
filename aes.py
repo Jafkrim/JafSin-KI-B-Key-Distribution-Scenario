@@ -185,9 +185,8 @@ def key_expansion(key: bytes) -> list[list[list[int]]]:
             # Melakukan operasi rot_word dan sub_word.
             temp = sub_word(rot_word(temp))
 
-            # Melakukan XOR dengan RCON.
-            for j in range(4):
-                temp[j] ^= RCON[i // 4][j]
+            # Melakukan XOR dengan RCON pada byte pertama word.
+            temp[0] ^= RCON[i // 4]
 
         # Melakukan XOR antara word 4 posisi sebelumnya dengan 'temp'.
         new_word = [words[i - 4][j] ^ temp[j] for j in range(4)]
