@@ -53,9 +53,12 @@ def recv_exact(sock: socket.socket, n: int) -> bytes | None:
     buf = bytearray()
     while len(buf) < n:
         chunk = sock.recv(n - len(buf))
+
         if not chunk:
             return None
+        
         buf.extend(chunk)
+
     return bytes(buf)
 
 def send_framed(sock: socket.socket, data: bytes) -> None:
@@ -65,8 +68,10 @@ def send_framed(sock: socket.socket, data: bytes) -> None:
 
 def recv_framed(sock: socket.socket) -> bytes:
     header = recv_exact(sock, 4)
+
     if header is None:
         raise ConnectionError("Koneksi ditutup sebelum header pesan diterima")
+    
     return recv_exact(sock, int.from_bytes(header, 'big')) or b''
 
 def receive_loop(sock: socket.socket, ks: bytes) -> None:
@@ -79,6 +84,7 @@ def receive_loop(sock: socket.socket, ks: bytes) -> None:
             # Koneksi ditutup peer, atau socket lokal ditutup saat kita sendiri keluar.
             print("\n[!] Alice menutup koneksi. Sesi berakhir.")
             os._exit(0)
+
         message = decrypt_message(cipher, ks).decode('utf-8')
         print(f"\n[Alice] {message}")
         print(f"[Alice] Ciphertext [Hex] : {cipher.hex()}")
@@ -96,6 +102,7 @@ def chat_loop(sock: socket.socket, ks: bytes) -> None:
 
         if message.strip().lower() in EXIT_WORDS:
             break
+
         if not message.strip():
             continue
 
@@ -105,6 +112,7 @@ def chat_loop(sock: socket.socket, ks: bytes) -> None:
         except OSError:
             print("\n[!] Gagal mengirim, koneksi sudah tertutup.")
             break
+
         print(f"[Kamu -> Alice] {message}")
         print(f"[Kamu -> Alice] Ciphertext [Hex] : {cipher.hex()}")
 
@@ -150,10 +158,12 @@ def main():
         # Langkah 3: menerima E_Ks(N2-1) dan memverifikasinya.
         response = recv_framed(conn)
         n2_minus_1 = decrypt_message(response, ks).decode('ascii')
+
         if n2_minus_1 != str(int(n2) - 1):
             print("[-] Verifikasi N2-1 gagal, Alice tidak memegang Ks yang sah.")
             conn.close()
             return
+        
         print("[+] Alice terautentikasi (N2-1 valid).")
 
         # Langkah 4: masuk ke pertukaran pesan dua arah memakai session key Ks.
@@ -161,8 +171,10 @@ def main():
 
     except KeyboardInterrupt:
         print("\n[*] Bob dihentikan oleh user.")
+
     except Exception as e:
         print(f"\n[-] Terjadi error pada Bob: {e}")
+        
     finally:
         server_sock.close()
 

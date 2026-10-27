@@ -52,21 +52,29 @@ def derive_key(text: str) -> bytes:
 def recv_exact(sock: socket.socket, n: int) -> bytes | None:
     # Membaca tepat n bytes; mengembalikan None bila koneksi ditutup sebelum lengkap.
     buf = bytearray()
+
     while len(buf) < n:
         chunk = sock.recv(n - len(buf))
+
         if not chunk:
             return None
+        
         buf.extend(chunk)
+
     return bytes(buf)
 
 def recv_until_close(sock: socket.socket) -> bytes:
     # KDC mengirim respons lalu menutup koneksi, jadi data dibaca sampai EOF.
     buf = bytearray()
+
     while True:
         chunk = sock.recv(4096)
+
         if not chunk:
             break
+
         buf.extend(chunk)
+
     return bytes(buf)
 
 def send_framed(sock: socket.socket, data: bytes) -> None:
@@ -76,8 +84,10 @@ def send_framed(sock: socket.socket, data: bytes) -> None:
 
 def recv_framed(sock: socket.socket) -> bytes:
     header = recv_exact(sock, 4)
+
     if header is None:
         raise ConnectionError("Koneksi ditutup sebelum header pesan diterima")
+    
     return recv_exact(sock, int.from_bytes(header, 'big')) or b''
 
 def receive_loop(sock: socket.socket, ks: bytes) -> None:
@@ -90,6 +100,7 @@ def receive_loop(sock: socket.socket, ks: bytes) -> None:
             # Koneksi ditutup peer, atau socket lokal ditutup saat kita sendiri keluar.
             print("\n[!] Bob menutup koneksi. Sesi berakhir.")
             os._exit(0)
+
         message = decrypt_message(cipher, ks).decode('utf-8')
         print(f"\n[Bob] {message}")
         print(f"[Bob] Ciphertext [Hex] : {cipher.hex()}")
@@ -107,6 +118,7 @@ def chat_loop(sock: socket.socket, ks: bytes) -> None:
 
         if message.strip().lower() in EXIT_WORDS:
             break
+
         if not message.strip():
             continue
 
@@ -116,6 +128,7 @@ def chat_loop(sock: socket.socket, ks: bytes) -> None:
         except OSError:
             print("\n[!] Gagal mengirim, koneksi sudah tertutup.")
             break
+
         print(f"[Kamu -> Bob] {message}")
         print(f"[Kamu -> Bob] Ciphertext [Hex] : {cipher.hex()}")
 
@@ -165,6 +178,7 @@ def main():
         if res_n1 != n1.encode('ascii') or res_id_b != id_b.encode('ascii'):
             print("[-] Verifikasi respons KDC gagal, sesi dihentikan.")
             return
+        
         print("[+] Respons KDC tervalidasi (N1 dan IDB cocok).")
 
         # Langkah 3: mengirim ticket ke Bob. Hanya Bob yang bisa membukanya dengan Kb.
@@ -187,6 +201,7 @@ def main():
 
     except KeyboardInterrupt:
         print("\n[*] Alice dihentikan oleh user.")
+        
     except Exception as e:
         print(f"\n[-] Terjadi error pada Alice: {e}")
 

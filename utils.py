@@ -14,9 +14,14 @@ def bytes_to_hex(data: bytes) -> str:
     return data.hex()
 
 def hex_to_bytes(hex_str: str) -> bytes:
+    # Menghapus whitespace di awal dan akhir string.
     hex_str = hex_str.strip()
+
+    # Jika diawali dengan '0x' atau '0X':
     if hex_str.startswith(('0x', '0X')):
+        # Menghapus '0x' atau '0X' dari awal string.
         hex_str = hex_str[2:]
+
     return bytes.fromhex(hex_str)
 
 # =======
@@ -24,17 +29,26 @@ def hex_to_bytes(hex_str: str) -> bytes:
 # =======
 
 def pad(data: bytes, block_size: int = 16) -> bytes:
+    # Menghitung sisa bytes yang diperlukan untuk mencapai kelipatan block_size.
     pad_len = block_size - (len(data) % block_size)
+
     return data + bytes([pad_len] * pad_len)
 
 def unpad(data: bytes) -> bytes:
+    # Jika data kosong:
     if not data:
         raise ValueError("Data cannot be empty")
+
+    # Menyimpan panjang padding dari byte terakhir.
     pad_len = data[-1]
+
     if pad_len == 0 or pad_len > len(data):
         raise ValueError("Invalid padding")
+
+    # Jika padding tidak seragam:
     if data[-pad_len:] != bytes([pad_len] * pad_len):
         raise ValueError("Invalid padding")
+    
     return data[:-pad_len]
 
 # =============================
@@ -42,17 +56,22 @@ def unpad(data: bytes) -> bytes:
 # =============================
 
 def xor_bytes(b1: bytes, b2: bytes) -> bytes:
+    # Melakukan operasi XOR antara dua byte array dengan panjang yang sama.
     return bytes(a ^ b for a, b in zip(b1, b2))
 
 def print_state(state: list[list[int]], label: str = ""):
     if label:
         print(f"[{label}]")
+
     for row in state:
         print(" ".join(f"{val:02x}" for val in row))
 
 def print_hex_block(data: bytes, label: str = ""):
     if label:
         print(f"[{label}]")
+
     for i in range(0, len(data), 16):
+        # Memotong data menjadi blok 16 bytes untuk ditampilkan.
         chunk = data[i:i + 16]
+        
         print(" ".join(f"{b:02x}" for b in chunk))

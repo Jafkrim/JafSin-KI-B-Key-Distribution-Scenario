@@ -1,7 +1,7 @@
 # server
 
-import socket
 import os
+import socket
 from aes import encrypt_block, key_expansion
 from utils import pad
 
