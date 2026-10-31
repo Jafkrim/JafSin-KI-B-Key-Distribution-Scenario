@@ -12,43 +12,34 @@
 Di dalam skenario ini, kami menggunakan 3 perangkat berbeda:
 
 1. **Laptop Windows 11**, menjalankan `bob.py`
-
 2. **Smartphone Android 16**, menjalankan `kdc.py`
-
 3. **Laptop Linux Fedora**, menjalankan `alice.py`
 
 ## Prasyarat Perangkat Lunak
 
 1. **Tailscale**, untuk Windows dan Linux
-
 2. **Termux**, untuk Android
-
-3. **Wireshark**, untuk Windows dan Android
+3. **Wireshark**, untuk Windows dan Linux
 
 ## Pengaturan Tailscale
 
 ### Untuk Windows
 
 1. Buka perangkat lunak **Tailscale**, lalu *login* dengan akun Google.
-
 2. Setelah *login*, koneksikan perangkat dalam jaringan Tailscale.
-
 3. Buka *admin console* untuk melihat perangkat yang nantinya terhubung.
+4. Ke tab *users*, invite external user sebagai member dan kirim tautan ke perangkat Linux.
 
 ### Untuk Android
 
 1. Buka aplikasi **Tailscale**, lalu *login* dengan akun Google yang sama dengan akun pada perangkat Windows.
-
 2. Setelah *login*, koneksikan perangkat dalam jaringan Tailscale.
-
 3. *Refresh admin console* pada Windows untuk melihat apakah perangkat Android sudah terhubung dengan baik dan benar.
 
 ### Untuk Linux
 
 1. a
-
 2. b
-
 3. c
 
 ## Pengaturan Termux
@@ -111,13 +102,11 @@ Di dalam skenario ini, kami menggunakan 3 perangkat berbeda:
 ### Untuk Windows
 
 1. a
-
 2. b
 
 ### Untuk Linux
 
 1. a
-
 2. b
 
 ## Langkah Inisiasi Pengujian
@@ -125,7 +114,6 @@ Di dalam skenario ini, kami menggunakan 3 perangkat berbeda:
 ### Untuk `bob.py`
 
 1. Buka tab **CMD** baru, masuk ke direktori repositori.
-
 2. Jalankan file dengan:
 
    ```cmd
@@ -135,7 +123,6 @@ Di dalam skenario ini, kami menggunakan 3 perangkat berbeda:
 ### Untuk `kdc.py`
 
 1. Pada tab **CMD** yang sudah terhubung dengan koneksi SSH ke Termux, masuk ke direktori repositori.
-
 2. Jalankan file dengan:
 
    ```bash
@@ -145,21 +132,16 @@ Di dalam skenario ini, kami menggunakan 3 perangkat berbeda:
 ### Untuk `alice.py`
 
 1. a
-
 2. b
 
 ## Langkah Simulasi Pengujian
 
 1. a
-
 2. b
-
 3. c
 
 ## Langkah Pengecekan Wireshark
 
 1. a
-
 2. b
-
 3. c
